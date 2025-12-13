@@ -7,12 +7,17 @@ class TransactionController {
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
       const search = req.query.search || "";
+      const payment_status = req.query.payment_status || "";
+      const sortBy = req.query.sortBy || "created_at";
+      const order = req.query.order || "asc";
 
       const result = await transactionService.getAll(
-        req.userId,
         page,
         limit,
-        search
+        search,
+        payment_status,
+        sortBy,
+        order
       );
 
       res.json({

@@ -28,7 +28,8 @@ class TransactionService {
     const { data, error, count } = await query;
     if (error) throw error;
     return {
-      data,
+      data: data,
+      pagination: count,
       page,
       limit,
       totalData: count,
