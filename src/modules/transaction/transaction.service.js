@@ -27,11 +27,13 @@ class TransactionService {
     query = query.order(sortBy, { ascending: order === "asc" });
     const { data, error, count } = await query;
     if (error) throw error;
+
+    const totalIncome = data.reduce((sum, item) => sum + item.total_amount, 0);
     return {
       data: data,
-      pagination: count,
       page,
       limit,
+      totalIncome: totalIncome,
       totalData: count,
       totalPage: Math.ceil(count / limit),
     };
@@ -137,10 +139,12 @@ class TransactionService {
       .lte("created_at", endMount.toISOString());
 
     if (error) throw error;
+    const totalIncome = data.reduce((sum, item) => sum + item.total_amount, 0);
 
     return {
       month: `${now.getFullYear()}-${now.getMonth() + 1}`,
       totalTransaction: data.length,
+      totalIncome: totalIncome,
       data: data,
     };
   }

@@ -26,6 +26,8 @@ class ProductController {
         success: true,
         messege: "product berhasil di dapat",
         data: product.data,
+        pagination: product.totalData,
+        totalPage: product.totalPage,
       });
     } catch (err) {
       next(err);

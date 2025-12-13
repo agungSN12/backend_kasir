@@ -24,7 +24,9 @@ class TransactionController {
         success: true,
         message: "Daftar transaksi kamu",
         data: result.data,
-        pagination: result.pagination,
+        pagination: result.totalData,
+        totalPage: result.totalPage,
+        totalIncome: result.totalIncome,
       });
     } catch (err) {
       next(err);
@@ -87,11 +89,12 @@ class TransactionController {
 
   async getMounlySummary(req, res, next) {
     try {
-      const data = await transactionService.getMounlySummary(req.userId);
+      const data = await transactionService.getMounlySummary();
       res.status(200).json({
         success: true,
         message: "summary data berhasil di ambil",
-        data,
+        data: data,
+        totalIncome: data.totalIncome,
       });
     } catch (err) {
       next(err);
@@ -103,7 +106,7 @@ class TransactionController {
       res.status(200).json({
         success: true,
         message: "chart data berhasil di ambil",
-        data,
+        data: data,
       });
     } catch (err) {
       next(err);
@@ -115,7 +118,7 @@ class TransactionController {
       res.status(200).json({
         success: true,
         message: "data transaksi hari ini berhasil di ambil",
-        data,
+        data: data,
       });
     } catch (err) {
       next(err);
