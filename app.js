@@ -2,8 +2,14 @@ const express = require("express");
 const ErrorHandler = require("./src/middlewares/ErrorHandler.middleware");
 const app = express();
 const routes = require("./routes");
+const {
+  enableCORS,
+  setSecurityHeaders,
+} = require("./src/middlewares/security.middleware");
 
 app.use(express.json());
+app.use(enableCORS);
+app.use(setSecurityHeaders);
 
 app.use("/api/v1", routes);
 app.use(ErrorHandler);
