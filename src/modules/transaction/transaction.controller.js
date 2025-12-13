@@ -32,7 +32,7 @@ class TransactionController {
 
   async getById(req, res, next) {
     try {
-      const result = await transactionService.getById();
+      const result = await transactionService.getById(req.params.id);
       res.status(200).json({
         success: true,
         message: "transaksi di temukan",
