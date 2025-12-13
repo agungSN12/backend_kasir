@@ -142,10 +142,10 @@ class TransactionService {
     const totalIncome = data.reduce((sum, item) => sum + item.total_amount, 0);
 
     return {
+      data: data,
       month: `${now.getFullYear()}-${now.getMonth() + 1}`,
       totalTransaction: data.length,
       totalIncome: totalIncome,
-      data: data,
     };
   }
 

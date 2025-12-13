@@ -32,14 +32,14 @@ class TransactionController {
 
   async getById(req, res, next) {
     try {
-      const transaction = await transactionService.getById(req.params.id);
-      if (transaction.user_id !== req.userId) {
+      const result = await transactionService.getById(req.params.id);
+      if (result.user_id !== req.userId) {
         throw new ForbiddenError("kamu tidak bisa akses transaksi ini");
       }
       res.status(200).json({
         success: true,
         message: "transaksi di temukan",
-        data: transaction,
+        data: result,
       });
     } catch (err) {
       next(err);
@@ -51,11 +51,11 @@ class TransactionController {
       const data = {
         ...req.body,
       };
-      const transaction = await transactionService.create(data);
+      const result = await transactionService.create(data);
       res.status(200).json({
         success: true,
         message: "transaksi berhasil di buat",
-        data: transaction,
+        data: result,
       });
     } catch (err) {
       next(err);
@@ -86,11 +86,11 @@ class TransactionController {
 
   async getMounlySummary(req, res, next) {
     try {
-      const data = await transactionService.getMounlySummary();
+      const result = await transactionService.getMounlySummary();
       res.status(200).json({
         success: true,
         message: "summary data berhasil di ambil",
-        data,
+        result,
       });
     } catch (err) {
       next(err);
@@ -98,11 +98,11 @@ class TransactionController {
   }
   async getMounlyChart(req, res, next) {
     try {
-      const data = await transactionService.getMounlyChart(req.userId);
+      const reuslt = await transactionService.getMounlyChart(req.userId);
       res.status(200).json({
         success: true,
         message: "chart data berhasil di ambil",
-        data: data,
+        data: reuslt,
       });
     } catch (err) {
       next(err);
@@ -110,11 +110,11 @@ class TransactionController {
   }
   async getTodayTransaction(req, res, next) {
     try {
-      const data = await transactionService.getTodayTransaction(req.userId);
+      const result = await transactionService.getTodayTransaction(req.userId);
       res.status(200).json({
         success: true,
         message: "data transaksi hari ini berhasil di ambil",
-        data: data,
+        data: result,
       });
     } catch (err) {
       next(err);
