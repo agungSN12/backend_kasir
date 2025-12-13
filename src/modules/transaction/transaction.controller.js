@@ -32,14 +32,11 @@ class TransactionController {
 
   async getById(req, res, next) {
     try {
-      const result = await transactionService.getById(req.params.id);
-      if (result.user_id !== req.userId) {
-        throw new ForbiddenError("kamu tidak bisa akses transaksi ini");
-      }
+      const result = await transactionService.getById();
       res.status(200).json({
         success: true,
         message: "transaksi di temukan",
-        data: result,
+        result: result,
       });
     } catch (err) {
       next(err);
@@ -55,7 +52,7 @@ class TransactionController {
       res.status(200).json({
         success: true,
         message: "transaksi berhasil di buat",
-        data: result,
+        result: result,
       });
     } catch (err) {
       next(err);

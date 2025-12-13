@@ -25,9 +25,7 @@ class ProductController {
       res.json({
         success: true,
         messege: "product berhasil di dapat",
-        data: product.data,
-        pagination: product.totalData,
-        totalPage: product.totalPage,
+        result: product,
       });
     } catch (err) {
       next(err);
@@ -41,7 +39,7 @@ class ProductController {
       res.json({
         success: true,
         messege: "product berhasil di dapat",
-        data: product,
+        result: product,
       });
     } catch (err) {
       next(err);
@@ -55,7 +53,7 @@ class ProductController {
       res.status(201).json({
         success: true,
         messege: "product berhasil di buat",
-        data: product,
+        result: product,
       });
     } catch (err) {
       next(err);
@@ -75,7 +73,7 @@ class ProductController {
       res.status(200).json({
         success: true,
         messege: "data berhasil di ubah",
-        data: product,
+        result: product,
       });
     } catch (err) {
       next(err);
