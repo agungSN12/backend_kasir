@@ -23,10 +23,7 @@ class TransactionController {
       res.json({
         success: true,
         message: "Daftar transaksi kamu",
-        data: result.data,
-        pagination: result.totalData,
-        totalPage: result.totalPage,
-        totalIncome: result.totalIncome,
+        result,
       });
     } catch (err) {
       next(err);
@@ -93,8 +90,7 @@ class TransactionController {
       res.status(200).json({
         success: true,
         message: "summary data berhasil di ambil",
-        data: data,
-        totalIncome: data.totalIncome,
+        data,
       });
     } catch (err) {
       next(err);
