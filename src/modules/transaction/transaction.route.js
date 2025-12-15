@@ -21,20 +21,32 @@ router.get(
 router.get(
   "/monthly-summary",
   asyncErrorHandle(
-    transactionController.getMounlySummary.bind(transactionController)
+    transactionController.getMonthlySummary.bind(transactionController)
   )
 );
 router.get(
   "/monthly-chart",
   authorizedRole("admin"),
   asyncErrorHandle(
-    transactionController.getMounlyChart.bind(transactionController)
+    transactionController.getMonthlyChart.bind(transactionController)
   )
 );
 router.get(
   "/today",
   asyncErrorHandle(
     transactionController.getTodayTransaction.bind(transactionController)
+  )
+);
+router.get(
+  "/weekly-summary",
+  asyncErrorHandle(
+    transactionController.getWeeklySummary.bind(transactionController)
+  )
+);
+router.get(
+  "/best-selling",
+  asyncErrorHandle(
+    transactionController.getBestSelling.bind(transactionController)
   )
 );
 

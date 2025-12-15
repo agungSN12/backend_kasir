@@ -8,47 +8,85 @@ class TransactionService {
     search = "",
     payment_status = "",
     sortBy = "created_at",
-    order = "asc",
+    order = "desc",
   }) {
     const offset = (page - 1) * limit;
 
-    let query = supabase.from("transaction").select("*", { count: "exact" });
+    let query = supabase.from("transaction").select(
+      `
+        id,
+        invoice_number,
+        customer_name,
+        total_amount,
+        payment_status,
+        created_at
+      `,
+      { count: "exact" }
+    );
 
+    // 🔍 search
     if (search.trim() !== "") {
       query = query.or(
         `invoice_number.ilike.%${search}%,customer_name.ilike.%${search}%`
       );
     }
 
+    // 💳 filter status
     if (payment_status.trim() !== "") {
       query = query.eq("payment_status", payment_status);
     }
-    query = query.range(offset, offset + limit - 1);
-    query = query.order(sortBy, { ascending: order === "asc" });
+
+    // ↕ sorting + pagination
+    query = query
+      .order(sortBy, { ascending: order === "asc" })
+      .range(offset, offset + limit - 1);
+
     const { data, error, count } = await query;
     if (error) throw error;
 
     const totalIncome = data.reduce((sum, item) => sum + item.total_amount, 0);
+
     return {
-      data: data,
+      data,
       page,
       limit,
-      totalIncome: totalIncome,
+      totalIncome,
       totalData: count,
       totalPage: Math.ceil(count / limit),
     };
   }
+
   async getById(id) {
     const { data, error } = await supabase
       .from("transaction")
-      .select("*")
+      .select(
+        `
+      id,
+      invoice_number,
+      customer_name,
+      payment_method,
+      total_amount,
+      payment_status,
+      note,
+      created_at,
+      detail_transaction (
+        id,
+        product_id,
+        price,
+        qty,
+        subtotal
+      )
+    `
+      )
       .eq("id", id)
-      .single();
+      .maybeSingle(); // ✅ LEBIH AMAN
 
-    if (error) throw new NotFoundError("transaksi tidak di temukan");
+    if (error) throw error;
+    if (!data) throw new NotFoundError("Transaksi tidak ditemukan");
 
     return data;
   }
+
   async generateInvoiceNumber() {
     const today = new Date();
     const y = today.getFullYear();
@@ -80,46 +118,98 @@ class TransactionService {
 
     return `${prefix}-${seq}`;
   }
-
   async create(payload) {
     const invoiceNumber = await this.generateInvoiceNumber();
-    const { data, error } = await supabase
+
+    const { items, ...transactionPayload } = payload;
+
+    // 1. insert transaction
+    const { data: transaction, error } = await supabase
       .from("transaction")
-      .insert({ ...payload, invoice_number: invoiceNumber })
-      .select();
+      .insert({
+        ...transactionPayload,
+        invoice_number: invoiceNumber,
+      })
+      .select()
+      .single();
+
     if (error) throw error;
-    return data[0];
+
+    // 2. insert transaction items
+    const transactionItems = items.map((item) => ({
+      transaction_id: transaction.id,
+      product_id: item.product_id,
+      price: item.price,
+      qty: item.qty,
+      subtotal: item.price * item.qty,
+    }));
+
+    const { error: itemError } = await supabase
+      .from("detail_transaction")
+      .insert(transactionItems);
+
+    if (itemError) throw itemError;
+
+    return transaction;
   }
+
   async update(payload, id) {
-    const { error: existingIdError } = await supabase
+    // 1. cek transaksi ada
+    const { error: existingError } = await supabase
       .from("transaction")
-      .select("*")
+      .select("id")
       .eq("id", id)
       .single();
 
-    if (existingIdError) throw new NotFoundError("transaksi tidak di temukan");
+    if (existingError) {
+      throw new NotFoundError("Transaksi tidak ditemukan");
+    }
 
-    const { data, error } = await supabase
+    // 2. pisahkan items
+    const { items, ...transactionPayload } = payload;
+
+    // 3. update transaction
+    const { data: transaction, error } = await supabase
       .from("transaction")
-      .update(payload)
+      .update(transactionPayload)
       .eq("id", id)
       .select()
       .single();
 
     if (error) throw error;
-    return data;
-  }
-  async delete(id) {
-    const { error } = await supabase
-      .from("transaction")
+
+    // 4. hapus item lama
+    const { error: deleteError } = await supabase
+      .from("detail_transaction")
       .delete()
-      .eq("id", id)
-      .select()
-      .single();
+      .eq("transaction_id", id);
+
+    if (deleteError) throw deleteError;
+
+    // 5. insert item baru
+    const transactionItems = items.map((item) => ({
+      transaction_id: id,
+      product_id: item.product_id,
+      price: item.price,
+      qty: item.qty,
+      subtotal: item.price * item.qty,
+    }));
+
+    const { error: itemError } = await supabase
+      .from("detail_transaction")
+      .insert(transactionItems);
+
+    if (itemError) throw itemError;
+
+    return transaction;
+  }
+
+  async delete(id) {
+    const { error } = await supabase.from("transaction").delete().eq("id", id);
 
     if (error) {
       if (error.code === "PGRST116") {
-        throw new NotFoundError("id tidak ditemukan");
+        throw new NotFoundError("Transaksi tidak ditemukan");
       }
       throw error;
     }
@@ -199,6 +289,53 @@ class TransactionService {
       .select("*")
       .gte("created_at", today.toISOString())
       .lte("created_at", endofDay.toISOString());
+
+    if (error) throw error;
+
+    return data;
+  }
+
+  async getWeeklySummary() {
+    const now = new Date();
+
+    // Cari hari Senin minggu ini
+    const day = now.getDay(); // Minggu=0, Senin=1
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+
+    const startWeek = new Date(now);
+    startWeek.setDate(now.getDate() + diffToMonday);
+    startWeek.setHours(0, 0, 0, 0);
+
+    const endWeek = new Date(startWeek);
+    endWeek.setDate(startWeek.getDate() + 6);
+    endWeek.setHours(23, 59, 59, 999);
+
+    const { data, error } = await supabase
+      .from("transaction")
+      .select("*")
+      .gte("created_at", startWeek.toISOString())
+      .lte("created_at", endWeek.toISOString());
+
+    if (error) throw error;
+
+    const totalIncome = data.reduce(
+      (sum, item) => sum + Number(item.total_amount),
+      0
+    );
+
+    return {
+      startWeek: startWeek.toISOString().split("T")[0],
+      endWeek: endWeek.toISOString().split("T")[0],
+      totalTransaction: data.length,
+      totalIncome,
+      data,
+    };
+  }
+
+  async getBestSellingByQty(limit = 5) {
+    const { data, error } = await supabase.rpc("get_best_selling", {
+      limit_count: limit,
+    });
 
     if (error) throw error;
 
