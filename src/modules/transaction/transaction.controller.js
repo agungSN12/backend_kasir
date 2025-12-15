@@ -1,5 +1,4 @@
 const transactionService = require("./transaction.service");
-const ForbiddenError = require("../../errors/ForbiddenError");
 
 class TransactionController {
   async getAll(req, res, next) {

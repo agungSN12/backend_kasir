@@ -60,7 +60,7 @@ const UpdateProductValidator = [
 
   body("unit")
     .optional()
-    .isInt(["porsi", "gelas"])
+    .isIn(["porsi", "gelas"])
     .withMessage("status harus berisi 'porsi' atau 'gelas' "),
 ];
 
