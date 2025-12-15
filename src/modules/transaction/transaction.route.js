@@ -59,7 +59,6 @@ router.get(
 
 router.post(
   "/",
-  authorizedRole("admin"),
   createTransactionValidator,
   validateRequest,
   asyncErrorHandle(transactionController.create.bind(transactionController))
@@ -67,7 +66,6 @@ router.post(
 
 router.put(
   "/:id",
-  authorizedRole("admin"),
   idParamValidator,
   updateTransactionValidator,
   validateRequest,
