@@ -178,28 +178,31 @@ class TransactionService {
 
     if (error) throw error;
 
-    // 4. hapus item lama
-    const { error: deleteError } = await supabase
-      .from("detail_transaction")
-      .delete()
-      .eq("transaction_id", id);
+    // 4. jika items ada dan array, hapus dan insert ulang
+    if (Array.isArray(items) && items.length > 0) {
+      // hapus item lama
+      const { error: deleteError } = await supabase
+        .from("detail_transaction")
+        .delete()
+        .eq("transaction_id", id);
 
-    if (deleteError) throw deleteError;
+      if (deleteError) throw deleteError;
 
-    // 5. insert item baru
-    const transactionItems = items.map((item) => ({
-      transaction_id: id,
-      product_id: item.product_id,
-      price: item.price,
-      qty: item.qty,
-      subtotal: item.price * item.qty,
-    }));
+      // insert item baru
+      const transactionItems = items.map((item) => ({
+        transaction_id: id,
+        product_id: item.product_id,
+        price: item.price,
+        qty: item.qty,
+        subtotal: item.price * item.qty,
+      }));
 
-    const { error: itemError } = await supabase
-      .from("detail_transaction")
-      .insert(transactionItems);
+      const { error: itemError } = await supabase
+        .from("detail_transaction")
+        .insert(transactionItems);
 
-    if (itemError) throw itemError;
+      if (itemError) throw itemError;
+    }
 
     return transaction;
   }
